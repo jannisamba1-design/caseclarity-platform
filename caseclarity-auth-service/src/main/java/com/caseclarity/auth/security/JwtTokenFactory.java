@@ -1,0 +1,50 @@
+package com.caseclarity.auth.security;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Base64;
+import java.util.Date;
+import java.util.UUID;
+
+@Component
+public class JwtTokenFactory implements TokenFactory{
+
+    private final SecretKey secretKey;
+    private final long accessTokenExpiry;
+    private final long refreshTokenExpiry;
+
+    public JwtTokenFactory(
+            @Value("${jwt.secret}") String base64Secret,
+            @Value("${jwt.access-expiration}") long accessTokenExpiry,
+            @Value("${jwt.refresh-expiration}") long refreshTokenExpiry
+    ) {
+        this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(base64Secret));
+        this.accessTokenExpiry = accessTokenExpiry;
+        this.refreshTokenExpiry = refreshTokenExpiry;
+    }
+
+    @Override
+    public String createToken(TokenType tokenType, UUID userId, String email, String role) {
+        long expiry = resolveExpiry(tokenType);
+
+        return Jwts.builder()
+                .setSubject(userId.toString())
+                .claim("email", email)
+                .claim("role", role)
+                .claim("type", tokenType.name())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiry * 1000))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    private long resolveExpiry(TokenType tokenType) {
+        return tokenType == TokenType.ACCESS
+                ? accessTokenExpiry
+                : refreshTokenExpiry;
+    }
+}
