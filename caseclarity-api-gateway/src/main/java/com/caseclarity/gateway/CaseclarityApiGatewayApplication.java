@@ -1,0 +1,13 @@
+package com.caseclarity.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class CaseclarityApiGatewayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(CaseclarityApiGatewayApplication.class, args);
+	}
+
+}
