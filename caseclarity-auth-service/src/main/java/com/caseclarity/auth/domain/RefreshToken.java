@@ -16,7 +16,7 @@ import java.util.UUID;
 public class RefreshToken {
 
     @Id
-    private UUID id;
+    private UUID id; // DB-generated (gen_random_uuid())
 
     private UUID userId;
 
@@ -25,4 +25,6 @@ public class RefreshToken {
     private Instant expiresAt;
 
     private boolean revoked;
+
+    private Instant createdAt; // audit field
 }

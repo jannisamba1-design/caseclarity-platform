@@ -10,18 +10,17 @@ import com.caseclarity.auth.dto.UserResponse;
 import com.caseclarity.auth.exception.UserAlreadyExistsException;
 import com.caseclarity.auth.repository.RefreshTokenRepository;
 import com.caseclarity.auth.repository.UserRepository;
-import com.caseclarity.auth.security.JwtTokenFactory;
 import com.caseclarity.auth.security.RefreshTokenGenerator;
 import com.caseclarity.auth.security.TokenFactory;
 import com.caseclarity.auth.security.TokenType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,9 +28,12 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordService passwordService;
-    private final TokenFactory jwtTokenFactory;
+    private final TokenFactory tokenFactory;
     private final RefreshTokenGenerator refreshTokenGenerator;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
+
+    @Value("${jwt.refresh-expiration}") long refreshTokenExpiry;
 
     public Mono<TokenResponse> login(LoginRequest request) {
 
@@ -47,7 +49,7 @@ public class AuthService {
                         return Mono.error(new IllegalArgumentException("Invalid credentials"));
                     }
 
-                    String accessToken = jwtTokenFactory.createToken(
+                    String accessToken = tokenFactory.createToken(
                             TokenType.ACCESS,
                             user.getId(),
                             user.getEmail(),
@@ -108,27 +110,43 @@ public class AuthService {
                 );
     }
 
+    @Transactional
     public Mono<TokenResponse> refreshAccessToken(String refreshToken) {
 
-        return refreshTokenRepository.findByToken(refreshToken)
-                .filter(token -> !token.isRevoked())
-                .filter(token -> token.getExpiresAt().isAfter(Instant.now()))
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid refresh token")))
-                .flatMap(token -> userRepository.findById(token.getUserId()))
-                .map(user -> {
+        return refreshTokenService.validate(refreshToken)
+                .flatMap(oldToken -> {
 
-                    String newAccessToken = jwtTokenFactory.createToken(
+                    String newAccessToken = tokenFactory.createToken(
                             TokenType.ACCESS,
-                            user.getId(),
-                            user.getEmail(),
-                            user.getRole().toString()
+                            oldToken.getUserId(),
+                            null,
+                            null
                     );
 
-                    return TokenResponse.builder()
-                            .accessToken(newAccessToken)
-                            .tokenType("Bearer")
-                            .expiresIn(3600)
-                            .build();
+                    String newRefreshToken = tokenFactory.createToken(
+                            TokenType.REFRESH,
+                            oldToken.getUserId(),
+                            null,
+                            null
+                    );
+
+                    Instant refreshExpiry = Instant.now().plusSeconds(refreshTokenExpiry);
+
+                    return refreshTokenService.revoke(oldToken)
+                            .then(refreshTokenService.create(
+                                    oldToken.getUserId(),
+                                    newRefreshToken,
+                                    refreshExpiry
+                            ))
+                            .thenReturn(
+                                    TokenResponse.builder()
+                                            .accessToken(newAccessToken)
+                                            .refreshToken(newRefreshToken)
+                                            .tokenType("Bearer")
+                                            .expiresIn(3600)
+                                            .build()
+                            );
                 });
     }
+
 }

@@ -10,4 +10,8 @@ public interface RefreshTokenRepository
         extends ReactiveCrudRepository<RefreshToken, UUID> {
 
     Mono<RefreshToken> findByToken(String token);
+
+    Mono<Void> deleteByUserId(UUID userId);
+
+    Mono<Boolean> existsByTokenAndRevokedFalse(String token);
 }
