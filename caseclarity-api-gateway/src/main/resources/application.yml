@@ -19,6 +19,12 @@ spring:
   application:
     name: api-gateway
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: ${JWT_SECRET}
+
 logging:
   level:
     org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG

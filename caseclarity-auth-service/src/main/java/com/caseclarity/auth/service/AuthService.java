@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -39,10 +40,9 @@ public class AuthService {
     public Mono<TokenResponse> login(LoginRequest request) {
 
         return userRepository.findByEmail(request.getEmail())
-                .switchIfEmpty(
-                        Mono.error(new IllegalArgumentException("Invalid credentials"))
-                )
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid credentials")))
                 .flatMap(user -> {
+
                     if (!passwordService.verify(
                             request.getPassword(),
                             user.getPasswordHash()
@@ -54,7 +54,8 @@ public class AuthService {
                             TokenType.ACCESS,
                             user.getId(),
                             user.getEmail(),
-                            user.getRole().toString()
+                            user.getTenantId(),              // 🔑 tenant-aware
+                            Set.of(user.getRole())           // 🔑 RBAC-ready
                     );
 
                     String refreshTokenValue = refreshTokenGenerator.generate();
@@ -116,42 +117,43 @@ public class AuthService {
     }
 
     @Transactional
-    public Mono<TokenResponse> refreshAccessToken(String refreshToken) {
+    public Mono<TokenResponse> refreshAccessToken(String refreshTokenValue) {
 
-        return refreshTokenService.validate(refreshToken)
-                .flatMap(oldToken -> {
+        return refreshTokenService.validate(refreshTokenValue)
+                .flatMap(oldToken ->
 
-                    String newAccessToken = tokenFactory.createToken(
-                            TokenType.ACCESS,
-                            oldToken.getUserId(),
-                            null,
-                            null
-                    );
+                        userRepository.findById(oldToken.getUserId())
+                                .flatMap(user -> {
 
-                    String newRefreshToken = tokenFactory.createToken(
-                            TokenType.REFRESH,
-                            oldToken.getUserId(),
-                            null,
-                            null
-                    );
+                                    String newAccessToken = tokenFactory.createToken(
+                                            TokenType.ACCESS,
+                                            user.getId(),
+                                            user.getEmail(),
+                                            user.getTenantId(),
+                                            Set.of(user.getRole())
+                                    );
 
-                    Instant refreshExpiry = Instant.now().plusSeconds(refreshTokenExpiry);
+                                    String newRefreshTokenValue = refreshTokenGenerator.generate();
 
-                    return refreshTokenService.revoke(oldToken)
-                            .then(refreshTokenService.create(
-                                    oldToken.getUserId(),
-                                    newRefreshToken,
-                                    refreshExpiry
-                            ))
-                            .thenReturn(
-                                    TokenResponse.builder()
-                                            .accessToken(newAccessToken)
-                                            .refreshToken(newRefreshToken)
-                                            .tokenType("Bearer")
-                                            .expiresIn(3600)
-                                            .build()
-                            );
-                });
+                                    Instant refreshExpiry =
+                                            Instant.now().plusSeconds(refreshTokenExpiry);
+
+                                    return refreshTokenService.revoke(oldToken)
+                                            .then(refreshTokenService.create(
+                                                    user.getId(),
+                                                    newRefreshTokenValue,
+                                                    refreshExpiry
+                                            ))
+                                            .thenReturn(
+                                                    TokenResponse.builder()
+                                                            .accessToken(newAccessToken)
+                                                            .refreshToken(newRefreshTokenValue)
+                                                            .tokenType("Bearer")
+                                                            .expiresIn(3600)
+                                                            .build()
+                                            );
+                                })
+                );
     }
 
 }

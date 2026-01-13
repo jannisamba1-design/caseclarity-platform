@@ -32,4 +32,7 @@ public class User {
 
     @Column("updated_at")
     private Instant updatedAt;
+
+    @Column("tenant_id")
+    private String tenantId;
 }

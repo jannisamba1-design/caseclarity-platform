@@ -1,5 +1,8 @@
 package com.caseclarity.auth.security;
 
+import com.caseclarity.auth.domain.Role;
+
+import java.util.Set;
 import java.util.UUID;
 
 public interface TokenFactory {
@@ -8,6 +11,7 @@ public interface TokenFactory {
             TokenType tokenType,
             UUID userId,
             String email,
-            String role
+            String tenantId,
+            Set<Role> roles
     );
 }
