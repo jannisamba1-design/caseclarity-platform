@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/internal/auth")
 public class AuthController {
@@ -32,11 +34,6 @@ public class AuthController {
                 .map(ResponseEntity::ok);
     }
 
-    @GetMapping("/secure")
-    public Mono<String> secure() {
-        return Mono.just("Access Granted");
-    }
-
     @PostMapping("/refresh")
     public Mono<TokenResponse> refresh(
             @RequestBody RefreshTokenRequest request
@@ -44,4 +41,19 @@ public class AuthController {
         return authService.refreshAccessToken(request.getRefreshToken());
     }
 
+    @PostMapping("/logout")
+    public Mono<ResponseEntity<Void>> logout(
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        return authService.logout(userId)
+                .thenReturn(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/secure")
+    public Mono<String> secure(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader("X-User-Role") String role
+    ) {
+        return Mono.just("Access Granted to " + role + " user " + userId);
+    }
 }

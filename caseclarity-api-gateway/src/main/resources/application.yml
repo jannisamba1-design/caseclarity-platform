@@ -1,12 +1,25 @@
 server:
-  port: 8080
+  port: 9000
+
+jwt:
+  secret: ${JWT_SECRET}
 
 spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://caseclarity-auth-service:8080
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /internal/auth/${segment}
+  main:
+    web-application-type: reactive
   application:
     name: api-gateway
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+logging:
+  level:
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG
+    org.springframework.security: DEBUG

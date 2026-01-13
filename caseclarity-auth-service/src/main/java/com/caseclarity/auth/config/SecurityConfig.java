@@ -4,7 +4,6 @@ import com.caseclarity.auth.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -23,10 +22,9 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/secure/admin/**").hasRole("ADMIN")
-                        .pathMatchers("/secure/user/**").hasAnyRole("USER", "ADMIN")
-                        .pathMatchers("/internal/admin/**").hasRole("ADMIN")
                         .pathMatchers(
                                 "/internal/auth/signup",
                                 "/internal/auth/login",
@@ -37,13 +35,6 @@ public class SecurityConfig {
                 .authenticationManager(authenticationManager())
                 .securityContextRepository(
                         new JwtSecurityContextRepository(jwtAuthenticationFilter)
-                )
-                .exceptionHandling(exceptionHandling ->
-                        exceptionHandling.accessDeniedHandler((exchange, denied) ->
-                                Mono.fromRunnable(() ->
-                                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN)
-                                )
-                        )
                 )
                 .build();
     }

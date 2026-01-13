@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -108,6 +109,10 @@ public class AuthService {
                                 .createdAt(savedUser.getCreatedAt())
                                 .build()
                 );
+    }
+
+    public Mono<Void> logout(UUID userId) {
+        return refreshTokenService.revokeAllByUser(userId);
     }
 
     @Transactional

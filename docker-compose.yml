@@ -8,14 +8,17 @@ services:
       POSTGRES_DB: auth_db
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     networks:
       - caseclarity-net
 
   auth-service:
-    build: ./caseclarity-auth-service
+    build:
+      context: ./caseclarity-auth-service
+      dockerfile: Dockerfile
+    image: caseclarity-platform-auth-service
     container_name: caseclarity-auth-service
+    ports:
+      - "8080:8080"
     env_file:
       - ./caseclarity-auth-service/.env
     depends_on:
@@ -24,18 +27,19 @@ services:
       - caseclarity-net
 
   api-gateway:
-    build: ./caseclarity-api-gateway
+    build:
+      context: ./caseclarity-api-gateway
+      dockerfile: Dockerfile
+    image: caseclarity-platform-api-gateway
     container_name: caseclarity-api-gateway
     ports:
-      - "9000:8080"
+      - "9000:9000"
+    env_file:
+      - ./caseclarity-api-gateway/.env
     depends_on:
       - auth-service
     networks:
       - caseclarity-net
 
-volumes:
-  pgdata:
-
 networks:
   caseclarity-net:
-    driver: bridge

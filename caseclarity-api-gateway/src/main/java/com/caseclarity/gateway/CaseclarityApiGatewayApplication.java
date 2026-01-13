@@ -2,8 +2,13 @@ package com.caseclarity.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 
-@SpringBootApplication
+@SpringBootApplication( exclude = {
+        SecurityAutoConfiguration.class,
+        ReactiveSecurityAutoConfiguration.class
+})
 public class CaseclarityApiGatewayApplication {
 
 	public static void main(String[] args) {

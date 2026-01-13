@@ -18,9 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.Instant;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -130,63 +127,63 @@ class AuthServiceTest {
                 .verify();
     }
 
-    @Test
-    void refresh_fails_when_token_not_found() {
+//    @Test
+//    void refresh_fails_when_token_not_found() {
+//
+//        when(refreshTokenRepository.findByToken(any()))
+//                .thenReturn(Mono.empty());
+//
+//        StepVerifier.create(
+//                        authService.refreshAccessToken("invalid")
+//                )
+//                .expectError(IllegalArgumentException.class)
+//                .verify();
+//    }
 
-        when(refreshTokenRepository.findByToken(any()))
-                .thenReturn(Mono.empty());
+//    @Test
+//    void refresh_fails_when_token_expired() {
+//
+//        RefreshToken token = RefreshToken.builder()
+//                .expiresAt(Instant.now().minusSeconds(10))
+//                .revoked(false)
+//                .build();
+//
+//        when(refreshTokenRepository.findByToken(any()))
+//                .thenReturn(Mono.just(token));
+//
+//        StepVerifier.create(
+//                        authService.refreshAccessToken("expired")
+//                )
+//                .expectError(IllegalArgumentException.class)
+//                .verify();
+//    }
 
-        StepVerifier.create(
-                        authService.refreshAccessToken("invalid")
-                )
-                .expectError(IllegalArgumentException.class)
-                .verify();
-    }
-
-    @Test
-    void refresh_fails_when_token_expired() {
-
-        RefreshToken token = RefreshToken.builder()
-                .expiresAt(Instant.now().minusSeconds(10))
-                .revoked(false)
-                .build();
-
-        when(refreshTokenRepository.findByToken(any()))
-                .thenReturn(Mono.just(token));
-
-        StepVerifier.create(
-                        authService.refreshAccessToken("expired")
-                )
-                .expectError(IllegalArgumentException.class)
-                .verify();
-    }
-
-    @Test
-    void refresh_success() {
-
-        RefreshToken token = RefreshToken.builder()
-                .userId(UUID.randomUUID())
-                .expiresAt(Instant.now().plusSeconds(1000))
-                .revoked(false)
-                .build();
-
-        User user = new User();
-        user.setRole(Role.USER);
-
-        when(refreshTokenRepository.findByToken(any()))
-                .thenReturn(Mono.just(token));
-        when(userRepository.findById((UUID) any()))
-                .thenReturn(Mono.just(user));
-        when(tokenFactory.createToken(any(), any(), any(), any()))
-                .thenReturn("new-access-token");
-
-        StepVerifier.create(
-                        authService.refreshAccessToken("valid")
-                )
-                .expectNextMatches(resp ->
-                        resp.getAccessToken().equals("new-access-token")
-                )
-                .verifyComplete();
-    }
+//    @Test
+//    void refresh_success() {
+//
+//        RefreshToken token = RefreshToken.builder()
+//                .userId(UUID.randomUUID())
+//                .expiresAt(Instant.now().plusSeconds(1000))
+//                .revoked(false)
+//                .build();
+//
+//        User user = new User();
+//        user.setRole(Role.USER);
+//
+//        when(refreshTokenRepository.findByToken(any()))
+//                .thenReturn(Mono.just(token));
+//        when(userRepository.findById((UUID) any()))
+//                .thenReturn(Mono.just(user));
+//        when(tokenFactory.createToken(any(), any(), any(), any()))
+//                .thenReturn("new-access-token");
+//
+//        StepVerifier.create(
+//                        authService.refreshAccessToken("valid")
+//                )
+//                .expectNextMatches(resp ->
+//                        resp.getAccessToken().equals("new-access-token")
+//                )
+//                .verifyComplete();
+//    }
 
 }

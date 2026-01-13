@@ -30,6 +30,15 @@ public class RefreshTokenService {
         return repository.save(token).then();
     }
 
+    public Mono<Void> revokeAllByUser(UUID userId) {
+        return repository.findAllByUserId(userId)
+                .flatMap(token -> {
+                    token.setRevoked(true);
+                    return repository.save(token);
+                })
+                .then();
+    }
+
     public Mono<RefreshToken> create(UUID userId, String token, Instant expiresAt) {
         return repository.save(
                 RefreshToken.builder()
