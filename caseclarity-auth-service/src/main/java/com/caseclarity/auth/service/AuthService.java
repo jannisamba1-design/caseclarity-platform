@@ -92,7 +92,7 @@ public class AuthService {
                             User user = User.builder()
                                     .email(request.getEmail())
                                     .passwordHash(passwordService.hash(request.getPassword()))
-                                    .role(Role.USER)
+                                    .role(Role.ADMIN)
                                     .status("ACTIVE")
                                     .createdAt(Instant.now())
                                     .updatedAt(Instant.now())

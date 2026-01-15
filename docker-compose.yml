@@ -11,6 +11,27 @@ services:
     networks:
       - caseclarity-net
 
+  cassandra:
+    image: cassandra:4.1
+    container_name: caseclarity-cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: "caseclarity-cluster"
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: [ "CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local'" ]
+      interval: 30s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+    networks:
+      - caseclarity-net
+
   auth-service:
     build:
       context: ./caseclarity-auth-service
@@ -41,5 +62,25 @@ services:
     networks:
       - caseclarity-net
 
+  evidence-service:
+    build:
+      context: ./caseclarity-evidence-service
+      dockerfile: Dockerfile
+    image: caseclarity-platform-evidence-service
+    container_name: caseclarity-evidence-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./caseclarity-evidence-service/.env
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - caseclarity-net
+
 networks:
   caseclarity-net:
+    driver: bridge
+
+volumes:
+  cassandra-data:

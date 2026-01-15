@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: evidence-service
+
+  main:
+    web-application-type: reactive
+
+  cassandra:
+    contact-points: cassandra
+    port: 9042
+    keyspace-name: caseclarity
+    local-datacenter: datacenter1
+    schema-action: create_if_not_exists
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+
+#debug: true

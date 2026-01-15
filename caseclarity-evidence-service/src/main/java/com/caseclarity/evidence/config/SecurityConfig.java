@@ -1,4 +1,4 @@
-package com.caseclarity.auth.config;
+package com.caseclarity.evidence.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,14 +11,10 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-
+    SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(ex -> ex
-                        .pathMatchers("/internal/auth/**").permitAll()
-                        .anyExchange().denyAll()
-                )
+                .authorizeExchange(ex -> ex.anyExchange().permitAll())
                 .build();
     }
 }

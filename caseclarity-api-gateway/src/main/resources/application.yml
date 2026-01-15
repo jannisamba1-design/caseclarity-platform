@@ -5,6 +5,12 @@ jwt:
   secret: ${JWT_SECRET}
 
 spring:
+  application:
+    name: api-gateway
+
+  main:
+    web-application-type: reactive
+
   cloud:
     gateway:
       routes:
@@ -14,10 +20,11 @@ spring:
             - Path=/auth/**
           filters:
             - RewritePath=/auth/(?<segment>.*), /internal/auth/${segment}
-  main:
-    web-application-type: reactive
-  application:
-    name: api-gateway
+
+        - id: evidence-service
+          uri: http://caseclarity-evidence-service:8082
+          predicates:
+            - Path=/evidence/**
 
   security:
     oauth2:

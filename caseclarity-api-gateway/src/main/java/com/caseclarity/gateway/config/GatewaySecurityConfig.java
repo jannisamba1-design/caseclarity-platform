@@ -28,8 +28,8 @@ public class GatewaySecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/evidence/**")
                         .hasAuthority("SCOPE_evidence:write")
 
-                        .pathMatchers(HttpMethod.PUT, "/evidence/**")
-                        .hasAuthority("SCOPE_evidence:write")
+//                        .pathMatchers(HttpMethod.PUT, "/evidence/**")
+//                        .hasAuthority("SCOPE_evidence:write")
 
                         // Everything else
                         .anyExchange().authenticated()
